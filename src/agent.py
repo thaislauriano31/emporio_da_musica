@@ -1,6 +1,7 @@
 from langchain_mistralai import ChatMistralAI
 from langchain_core.prompts import ChatPromptTemplate
 from settings import AppSettings, missing_required_env
+from rag import consultar_politicas
 
 SYSTEM_PROMPT = """
 Você é Tom, um atendente da loja de instrumentos musicais Empório da Música.
@@ -27,28 +28,27 @@ class LLM:
         if missing_required_env(settings):
             raise ValueError("MISTRAL_API_KEY não encontrada. Verifique o arquivo .env na raiz do projeto.")
 
-        return ChatMistralAI(
+        self.model = ChatMistralAI(
             model=settings.chat_model,
             api_key=settings.mistral_api_key,
             temperature=0.2,
         )
 
-    def generate_response(self, user_input: str) -> str:
+        self.tools = [consultar_politicas]
+        self.model_with_tools = self.model.bind_tools(self.tools)
+
+    def processar_mensagem(self, mensagens: list):
+        """Recebe o histórico de mensagens e retorna a resposta da LLM.
+        Se a LLM decidir chamar uma ferramenta, ela retornará uma solicitação de tool_call.
+        """
         prompt = ChatPromptTemplate.from_messages([
             ("system", SYSTEM_PROMPT),
-            ("human", "{input}")
+            ("placeholder", "{messages}")
         ])
-        chain = prompt | self.model
-        response = chain.invoke({"input": user_input})
-        return response.content
+        
+        chain = prompt | self.model_with_tools
+        return chain.invoke({"messages": mensagens})
 
 if __name__ == "__main__":
     settings = AppSettings()
-    llm = LLM(settings) 
-    resposta_saudacao = llm.generate_response("Olá, tudo bem? Quem é você?")
-    print("TESTE 1: Saudação")
-    print(resposta_saudacao)
-
-    resposta_fora_escopo = llm.generate_response("Qual é a receita de um bolo de cenoura?")
-    print("\nTeste 2: Fora do Escopo")
-    print(resposta_fora_escopo)
+    agent = LLM(settings)   
