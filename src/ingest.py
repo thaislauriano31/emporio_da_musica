@@ -23,7 +23,7 @@ def gerar_banco_vetorial():
     )
 
     vectorstore = FAISS.from_documents(chunks, embeddings)
-    vectorstore.save_local("faiss_index")
+    vectorstore.save_local("../faiss_index")
     print("Base vetorial salva na pasta 'faiss_index/'.")
 
 if __name__ == "__main__":

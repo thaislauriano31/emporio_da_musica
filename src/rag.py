@@ -10,7 +10,7 @@ embeddings = HuggingFaceEmbeddings(
 )
 
 vectorstore = FAISS.load_local(
-    "faiss_index", 
+    "../faiss_index", 
     embeddings, 
     allow_dangerous_deserialization=True
 )
