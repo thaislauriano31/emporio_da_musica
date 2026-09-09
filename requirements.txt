@@ -1,0 +1,17 @@
+# LLM & Agente
+langchain
+langchain-mistralai
+langchain-community
+
+# RAG/ busca vetorial
+faiss-cpu
+pypdf
+
+# manipulação dos csvs
+pandas
+
+# config
+python-dotenv
+
+# interface
+streamlit
