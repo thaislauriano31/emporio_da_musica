@@ -1,7 +1,9 @@
 from langchain_mistralai import ChatMistralAI
 from langchain_core.prompts import ChatPromptTemplate
+from langchain_core.messages import HumanMessage, ToolMessage
 from settings import AppSettings, missing_required_env
 from rag import consultar_politicas
+from tools import consultar_catalogo
 
 SYSTEM_PROMPT = """
 Você é Tom, um atendente da loja de instrumentos musicais Empório da Música.
@@ -18,6 +20,10 @@ Você é Tom, um atendente da loja de instrumentos musicais Empório da Música.
 - Mantenha respostas diretas, claras e sem rodeios.
 - Seja simpático, mas sem ser excessivamente prolixo.
 - Nunca invente itens ou serviços que não foram confirmados pelas suas ferramentas ou base de dados.
+
+[USO DE FERRAMENTAS]
+- Para perguntas sobre regras, trocas, garantias ou frete: use `consultar_politicas`.
+- Para perguntas sobre produtos, preços, marcas, categorias e estoque: use `consultar_catalogo`.
 """
 
 class LLM:
@@ -34,21 +40,54 @@ class LLM:
             temperature=0.2,
         )
 
-        self.tools = [consultar_politicas]
+        self.tools = [consultar_politicas, consultar_catalogo]
+        self.tools_map = {tool.name: tool for tool in self.tools}
         self.model_with_tools = self.model.bind_tools(self.tools)
 
-    def processar_mensagem(self, mensagens: list):
+    def responder(self, pergunta: str) -> str:
         """Recebe o histórico de mensagens e retorna a resposta da LLM.
         Se a LLM decidir chamar uma ferramenta, ela retornará uma solicitação de tool_call.
         """
         prompt = ChatPromptTemplate.from_messages([
             ("system", SYSTEM_PROMPT),
-            ("placeholder", "{messages}")
+            ("user", "{input}")
         ])
         
         chain = prompt | self.model_with_tools
-        return chain.invoke({"messages": mensagens})
+        
+        mensagens = [HumanMessage(content=pergunta)]
+        resposta_inicial = chain.invoke({"input": pergunta})
+        
+        if resposta_inicial.tool_calls:
+            # Para cada tool solicitada, executa a função Python correspondente
+            for tool_call in resposta_inicial.tool_calls:
+                tool_name = tool_call["name"]
+                tool_args = tool_call["args"]
+                
+                tool_func = self.tools_map[tool_name]
+                resultado_tool = tool_func.invoke(tool_args)
+                
+                print(resultado_tool)
+                
+                # Passando o contexto obtido pela ferramenta
+                prompt_sintese = ChatPromptTemplate.from_messages([
+                    ("system", SYSTEM_PROMPT),
+                    ("user", "{input}"),
+                    ("system", f"Resultado obtido da consulta ao banco/sistema: {resultado_tool}\nCom base nesses dados, responda ao cliente.")
+                ])
+                chain_sintese = prompt_sintese | self.model_with_tools
+                resposta_final = chain_sintese.invoke({"input": pergunta})
+                return resposta_final.content
+                
+        return resposta_inicial.content
+
 
 if __name__ == "__main__":
-    settings = AppSettings()
-    agent = LLM(settings)   
+    bot = LLM(settings=AppSettings())
+    
+    pergunta_teste = "Me arrependi da minha compra, posso devolver meu pedido?"
+    print(f"PERGUNTA: {pergunta_teste}\n")
+    
+    resposta = bot.responder(pergunta_teste)
+    print("\nRESPOSTA FINAL DO TOM:")
+    print(resposta)  
