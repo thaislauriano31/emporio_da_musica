@@ -1,24 +1,22 @@
 from settings import AppSettings
-from langchain_community.vectorstores import FAISS
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_core.tools import tool
-from pathlib import Path
+from langchain_mongodb import MongoDBAtlasVectorSearch
 
+settings = AppSettings()
 embeddings = HuggingFaceEmbeddings(
     model_name="intfloat/multilingual-e5-small",
-    model_kwargs={'device': 'cpu', 'token': AppSettings().hf_token},
+    model_kwargs={'device': 'cpu', 'token': settings.hf_token},
     encode_kwargs={'normalize_embeddings': True}
 )
 
-BASE_DIR = Path(__file__).resolve().parent
-FAISS_PATH = BASE_DIR / "faiss_index"
-
-vectorstore = FAISS.load_local(
-    str(FAISS_PATH),
-    embeddings,
-    allow_dangerous_deserialization=True
+vector_store = MongoDBAtlasVectorSearch(
+    embedding=embeddings,
+    collection=settings.MONGODB_COLLECTION,
+    index_name=settings.VECTOR_SEARCH_INDEX_NAME,
+    relevance_score_fn="cosine",
+    type="vectorSearch"
 )
-retriever = vectorstore.as_retriever(search_kwargs={"k": 3})
 
 @tool
 def consultar_politicas(query: str) -> str:
@@ -30,7 +28,7 @@ def consultar_politicas(query: str) -> str:
         query: A dúvida do cliente.
     """
     busca_formatada = f"query: {query}"
-    docs = retriever.invoke(busca_formatada)
+    docs = vector_store.similarity_search(busca_formatada, k=3)
     
     resultados = [doc.page_content.replace("passage: ", "") for doc in docs]
     
