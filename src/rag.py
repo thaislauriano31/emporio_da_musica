@@ -1,11 +1,11 @@
-# rag.py
+from settings import AppSettings
 from langchain_community.vectorstores import FAISS
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_core.tools import tool
 
 embeddings = HuggingFaceEmbeddings(
     model_name="intfloat/multilingual-e5-small",
-    model_kwargs={'device': 'cpu'},
+    model_kwargs={'device': 'cpu', 'token': AppSettings().hf_token},
     encode_kwargs={'normalize_embeddings': True}
 )
 

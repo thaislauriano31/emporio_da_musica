@@ -2,6 +2,7 @@ from langchain_community.document_loaders import PyPDFLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_community.vectorstores import FAISS
 from langchain_huggingface import HuggingFaceEmbeddings
+from settings import AppSettings
 
 def gerar_banco_vetorial():
     loader = PyPDFLoader("../data/politicas_da_loja.pdf")
@@ -18,7 +19,7 @@ def gerar_banco_vetorial():
 
     embeddings = HuggingFaceEmbeddings(
         model_name="intfloat/multilingual-e5-small",
-        model_kwargs={'device': 'cpu'},
+        model_kwargs={'device': 'cpu', 'token': AppSettings().hf_token},
         encode_kwargs={'normalize_embeddings': True}
     )
 
