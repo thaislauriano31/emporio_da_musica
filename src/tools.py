@@ -75,3 +75,50 @@ def consultar_catalogo(
         )
         
     return "\n".join(linhas)
+
+def _get_pedidos() -> pd.DataFrame:
+    df_clientes = pd.read_csv("../data/customers.csv")
+    df_pedidos = pd.read_csv("../data/orders.csv")
+    df_pedido_itens = pd.read_csv("../data/order_items.csv")
+    df_catalogo = _get_catalogo()
+
+    df_pedidos_merged = df_pedidos.merge(
+        df_clientes,
+        left_on="customer_id",
+        right_on="customer_id",
+        suffixes=('', '_cust')
+    )
+
+    df_pedidos_final = df_pedidos_merged.merge(
+        df_pedido_itens,
+        left_on="order_id",
+        right_on="order_id",
+        suffixes=('', '_item')
+    ).merge(
+        df_catalogo,
+        left_on="product_id",
+        right_on="product_id",
+        suffixes=('', '_prod')
+    )
+    
+    return df_pedidos_final
+
+@tool
+def consultar_pedidos(pedido_id: int = None, customer_name: str = None) -> str:
+    """Retorna os pedidos da loja, incluindo informações do cliente, produtos e status do pedido."""
+    df_pedidos = _get_pedidos()
+    # Filtra por id do pedido ou nome do cliente
+    if pedido_id:
+        df_pedidos = df_pedidos[df_pedidos['order_id'] == pedido_id]
+    elif customer_name:
+        df_pedidos = df_pedidos[df_pedidos['name'].str.contains(customer_name, case=False, na=False)]
+
+    if df_pedidos.empty:
+        return None
+
+    linhas = []
+    for _, row in df_pedidos.iterrows():
+        linhas.append(
+            f"- **{row['order_id']}** | Cliente: {row['name']} | Produto: {row['name_prod']} | Quantidade: {row['quantity']} | Status: {row['status']} | Data do Pedido: {row['order_date']} | Data de Entrega: {row['estimated_delivery']} | Valor: R${row['total_brl']:.2f}"
+        )
+    return "\n".join(linhas)

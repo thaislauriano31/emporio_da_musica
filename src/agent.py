@@ -3,7 +3,7 @@ from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.messages import SystemMessage, HumanMessage, ToolMessage, AIMessage
 from settings import AppSettings, missing_required_env
 from rag import consultar_politicas
-from tools import consultar_catalogo
+from tools import consultar_catalogo, consultar_pedidos
 
 SYSTEM_PROMPT = """
 Você é Tom, um atendente da loja de instrumentos musicais Empório da Música.
@@ -29,6 +29,7 @@ Você é Tom, um atendente da loja de instrumentos musicais Empório da Música.
 Nesse caso, gere todos os termos_busca que julgar relevantes e chame a função 1x para cada termo.
 Se a pergunta for geral sobre todos os produtos, envie termo_busca vazio para receber a lista completa.
 - Para perguntas sobre promoções e estoque: use `consultar_catalogo` com os filtros de preço e categoria adequados. Essas informações são retornadas ao consultar os produtos.
+- Para perguntas sobre pedidos, rastreio e status: use `consultar_pedidos`, mas peça sempre que o cliente forneça o nome completo ou id do pedido para poder consultar.
 - Você pode acionar múltiplas ferramentas ou fazer várias consultas seguidas se a dúvida do cliente exigir.
 """
 
@@ -46,7 +47,7 @@ class LLM:
             temperature=0.2,
         )
 
-        self.tools = [consultar_politicas, consultar_catalogo]
+        self.tools = [consultar_politicas, consultar_catalogo, consultar_pedidos]
         self.tools_map = {tool.name: tool for tool in self.tools}
         self.model_with_tools = self.model.bind_tools(self.tools)
 
@@ -78,7 +79,7 @@ class LLM:
                 tool_name = tool_call["name"]
                 tool_args = tool_call["args"]
                 tool_id = tool_call["id"]
-                
+                print(f"LLM solicitou a ferramenta {tool_name} com argumentos: {tool_args}")
                 tool_func = self.tools_map.get(tool_name)
                 if tool_func:
                     resultado_tool = tool_func.invoke(tool_args)
@@ -86,8 +87,8 @@ class LLM:
                     resultado_tool = f"Erro: Ferramenta {tool_name} não encontrada."
                 
                 if not resultado_tool or not str(resultado_tool).strip():
-                    return "Desculpe, não consegui obter informações relevantes para sua pergunta. Tente reformular sua pergunta ou entre em contato com o suporte da loja."
-                    
+                    return "Desculpe, não consegui obter informações relevantes para responder sua pergunta. Por favor tente reformular ou entre em contato com a loja."
+
                 mensagens.append(
                     ToolMessage(
                         content=str(resultado_tool),
