@@ -38,12 +38,21 @@ def consultar_catalogo(
     """
     df = _get_catalogo()
     if termo_busca:
-        termo = termo_busca.lower()
-        mascara_termo = (
-            df['name'].str.lower().str.contains(termo, na=False) |
-            df['name_cat'].str.lower().str.contains(termo, na=False)
+        palavras = termo_busca.lower().split()
+        for palavra in palavras:
+            mascara = (
+                df['name'].str.lower().str.contains(palavra, na=False) |
+                df['name_cat'].str.lower().str.contains(palavra, na=False)
+            )
+        # O DataFrame vai encolhendo a cada palavra
+        df = df[mascara]
+
+    # Usar valor promocional se houver
+    if 'is_active_promo' in df.columns:
+        df['price_brl'] = df.apply(
+            lambda row: row['price_brl']*(100-row['discount_percent_promo']) if row.get('is_active_promo', 1) else row['price_brl'], 
+            axis=1
         )
-        df = df[mascara_termo]
 
     if preco_max is not None:
         df = df[df['price_brl'] <= preco_max] 
@@ -52,10 +61,10 @@ def consultar_catalogo(
         df = df[df['price_brl'] >= preco_min]
 
     if df.empty:
-        return "Nenhum produto encontrado dentro dos critérios informados."
+        return None
 
     # Ordena os resultados ordenando do mais barato para o mais caro
-    df = df.sort_values(by='price_brl').head(5)
+    df = df.sort_values(by='price_brl')
     
     linhas = []
     for _, row in df.iterrows():

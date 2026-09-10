@@ -20,10 +20,12 @@ Você é Tom, um atendente da loja de instrumentos musicais Empório da Música.
 - Mantenha respostas diretas, claras e sem rodeios.
 - Seja simpático, mas sem ser excessivamente prolixo.
 - Nunca invente itens ou serviços que não foram confirmados pelas suas ferramentas ou base de dados.
+- Nunca deixe uma resposta em aberto. Se não souber a resposta, informe que não tem essa informação e sugira que o cliente entre em contato com o suporte da loja.
 
 [USO DE FERRAMENTAS]
 - Para perguntas sobre regras, trocas, garantias ou frete: use `consultar_politicas`.
-- Para perguntas sobre produtos, preços, marcas, categorias e estoque: use `consultar_catalogo`.
+- Para perguntas sobre produtos, preços, marcas, categorias e estoque: use `consultar_catalogo`. Nesse caso, gere todos os termos_busca que julgar relevantes e chame a função 1x para cada termo.
+- Se uma pergunta misturar assuntos de política da loja e produtos, use ambas as ferramentas.
 """
 
 class LLM:
@@ -46,7 +48,7 @@ class LLM:
 
     def responder(self, pergunta: str) -> str:
         """Recebe o histórico de mensagens e retorna a resposta da LLM.
-        Se a LLM decidir chamar uma ferramenta, ela retornará uma solicitação de tool_call.
+        Se a LLM decidir chamar uma ferramenta, ela retornará uma ou mais solicitações de tool_call.
         """
         prompt = ChatPromptTemplate.from_messages([
             ("system", SYSTEM_PROMPT),
@@ -55,9 +57,9 @@ class LLM:
         
         chain = prompt | self.model_with_tools
         
-        mensagens = [HumanMessage(content=pergunta)]
         resposta_inicial = chain.invoke({"input": pergunta})
-        
+        print("DEBUG INICIO")
+        print(resposta_inicial)
         if resposta_inicial.tool_calls:
             # Para cada tool solicitada, executa a função Python correspondente
             for tool_call in resposta_inicial.tool_calls:
@@ -66,8 +68,10 @@ class LLM:
                 
                 tool_func = self.tools_map[tool_name]
                 resultado_tool = tool_func.invoke(tool_args)
-                
+                print(f"DEBUG RESULTADO TOOL {tool_name}:")
                 print(resultado_tool)
+                if not resultado_tool:
+                    return "Desculpe, não consegui obter informações relevantes para sua pergunta. Tente reformular sua pergunta ou entre em contato com o suporte da loja."
                 
                 # Passando o contexto obtido pela ferramenta
                 prompt_sintese = ChatPromptTemplate.from_messages([
@@ -79,15 +83,4 @@ class LLM:
                 resposta_final = chain_sintese.invoke({"input": pergunta})
                 return resposta_final.content
                 
-        return resposta_inicial.content
-
-
-if __name__ == "__main__":
-    bot = LLM(settings=AppSettings())
-    
-    pergunta_teste = "Me arrependi da minha compra, posso devolver meu pedido?"
-    print(f"PERGUNTA: {pergunta_teste}\n")
-    
-    resposta = bot.responder(pergunta_teste)
-    print("\nRESPOSTA FINAL DO TOM:")
-    print(resposta)  
+        return resposta_inicial.content 

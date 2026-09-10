@@ -38,7 +38,7 @@ if user_input := st.chat_input("Digite sua dúvida aqui..."):
     st.session_state.messages.append({"role": "user", "content": user_input})
 
     with st.chat_message("assistant", avatar="🎸"):
-        with st.spinner("TEstou consultando o sistema..."):
+        with st.spinner("Estou consultando o sistema..."):
             try:
                 resposta_tom = st.session_state.agent.responder(user_input)
                 st.write(resposta_tom)
