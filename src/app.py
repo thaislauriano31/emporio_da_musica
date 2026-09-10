@@ -40,9 +40,9 @@ if user_input := st.chat_input("Digite sua dúvida aqui..."):
     with st.chat_message("assistant", avatar="🎸"):
         with st.spinner("Estou consultando o sistema..."):
             try:
-                resposta_tom = st.session_state.agent.responder(user_input)
-                st.write(resposta_tom)
-                st.session_state.messages.append({"role": "assistant", "content": resposta_tom})
+                resposta = st.session_state.agent.responder(user_input, st.session_state.messages)
+                st.write(resposta)
+                st.session_state.messages.append({"role": "assistant", "content": resposta})
             except Exception as e:
                 st.error("Ops! Ocorreu um erro ao processar sua pergunta. Tente novamente.")
                 print(f"[ERRO APP]: {e}")
