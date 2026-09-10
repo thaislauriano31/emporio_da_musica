@@ -44,7 +44,6 @@ def consultar_catalogo(
                 df['name'].str.lower().str.contains(palavra, na=False) |
                 df['name_cat'].str.lower().str.contains(palavra, na=False)
             )
-        # O DataFrame vai encolhendo a cada palavra
         df = df[mascara]
 
     # Usar valor promocional se houver
@@ -68,8 +67,9 @@ def consultar_catalogo(
     
     linhas = []
     for _, row in df.iterrows():
+
         linhas.append(
-            f"- **{row['name']}** | Categoria: {row['name_cat']} | Preço: R${row['price_brl']:.2f}"
+            f"- **{row['name']}** | Categoria: {row['name_cat']} | Preço: R${row['price_brl']:.2f | Estoque: {row['stock_quantity']}} | Promoção: {'Sim' if row.get('is_active_promo', 0) else 'Não'}"
         )
         
     return "\n".join(linhas)
