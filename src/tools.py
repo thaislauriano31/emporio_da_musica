@@ -1,11 +1,13 @@
 import pandas as pd
 from langchain_core.tools import tool
+from pathlib import Path
 
 def _get_catalogo() -> pd.DataFrame:
-    df_produtos = pd.read_csv("../data/products.csv")
-    df_categorias = pd.read_csv("../data/categories.csv")
-    df_promocoes = pd.read_csv("../data/promotions.csv")
-    
+    base_path = Path(__file__).resolve().parent.parent / "data"
+    df_produtos = pd.read_csv(base_path / "products.csv")
+    df_categorias = pd.read_csv(base_path / "categories.csv")
+    df_promocoes = pd.read_csv(base_path / "promotions.csv")
+
     df_merged = df_produtos.merge(
         df_categorias, 
         left_on="category_id", 

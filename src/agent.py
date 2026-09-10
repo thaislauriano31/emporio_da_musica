@@ -79,7 +79,7 @@ class LLM:
                 tool_name = tool_call["name"]
                 tool_args = tool_call["args"]
                 tool_id = tool_call["id"]
-                print(f"LLM solicitou a ferramenta {tool_name} com argumentos: {tool_args}")
+                
                 tool_func = self.tools_map.get(tool_name)
                 if tool_func:
                     resultado_tool = tool_func.invoke(tool_args)
