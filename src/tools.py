@@ -34,7 +34,7 @@ def _get_catalogo() -> pd.DataFrame:
 
     return df_catalogo_final
 
-# @tool
+@tool
 def consultar_catalogo(
     termo_busca: str = None,
     preco_min: float = None, 
