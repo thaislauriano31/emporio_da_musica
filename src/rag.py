@@ -2,6 +2,7 @@ from settings import AppSettings
 from langchain_community.vectorstores import FAISS
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_core.tools import tool
+from pathlib import Path
 
 embeddings = HuggingFaceEmbeddings(
     model_name="intfloat/multilingual-e5-small",
@@ -9,9 +10,12 @@ embeddings = HuggingFaceEmbeddings(
     encode_kwargs={'normalize_embeddings': True}
 )
 
+BASE_DIR = Path(__file__).resolve().parent
+FAISS_PATH = BASE_DIR / "faiss_index"
+
 vectorstore = FAISS.load_local(
-    "../faiss_index", 
-    embeddings, 
+    str(FAISS_PATH),
+    embeddings,
     allow_dangerous_deserialization=True
 )
 retriever = vectorstore.as_retriever(search_kwargs={"k": 3})
