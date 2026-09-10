@@ -79,7 +79,7 @@ class LLM:
                 tool_name = tool_call["name"]
                 tool_args = tool_call["args"]
                 tool_id = tool_call["id"]
-                
+
                 tool_func = self.tools_map.get(tool_name)
                 if tool_func:
                     resultado_tool = tool_func.invoke(tool_args)
@@ -87,8 +87,7 @@ class LLM:
                     resultado_tool = f"Erro: Ferramenta {tool_name} não encontrada."
                 
                 if not resultado_tool or not str(resultado_tool).strip():
-                    return "Desculpe, não consegui obter informações relevantes para responder sua pergunta. Por favor tente reformular ou entre em contato com a loja."
-
+                    return "Desculpe, não consegui obter informações relevantes para responder sua pergunta. Por favor tente reformular a pergunta ou entre em contato com diretamente com a loja.\nTelefone: (67) 3341-4444\nEmail:contato@emporiodamusica.com.br"
                 mensagens.append(
                     ToolMessage(
                         content=str(resultado_tool),
