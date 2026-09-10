@@ -1,4 +1,3 @@
-# tools.py
 import pandas as pd
 from langchain_core.tools import tool
 
@@ -22,9 +21,20 @@ def _get_catalogo() -> pd.DataFrame:
         suffixes=('', '_promo')
     )
 
+    # Transofrma 'is_active' em bool
+    df_catalogo_final['is_active'] = df_catalogo_final['is_active'].fillna(0).astype(bool)
+
+    # Ajusta o preço com desconto se houver promoção ativa
+    df_catalogo_final['discount_percent'] = df_catalogo_final['discount_percent'].fillna(0)
+    if 'is_active' in df_catalogo_final.columns:
+        df_catalogo_final['price_brl'] = df_catalogo_final.apply(
+            lambda row: row['price_brl']*((100-row['discount_percent'])/100) if row['is_active'] else row['price_brl'], 
+            axis=1
+        )
+
     return df_catalogo_final
 
-@tool
+# @tool
 def consultar_catalogo(
     termo_busca: str = None,
     preco_min: float = None, 
@@ -46,13 +56,6 @@ def consultar_catalogo(
             )
         df = df[mascara]
 
-    # Usar valor promocional se houver
-    if 'is_active_promo' in df.columns:
-        df['price_brl'] = df.apply(
-            lambda row: row['price_brl']*(100-row['discount_percent_promo']) if row.get('is_active_promo', 1) else row['price_brl'], 
-            axis=1
-        )
-
     if preco_max is not None:
         df = df[df['price_brl'] <= preco_max] 
         
@@ -67,9 +70,8 @@ def consultar_catalogo(
     
     linhas = []
     for _, row in df.iterrows():
-
         linhas.append(
-            f"- **{row['name']}** | Categoria: {row['name_cat']} | Preço: R${row['price_brl']:.2f | Estoque: {row['stock_quantity']}} | Promoção: {'Sim' if row.get('is_active_promo', 0) else 'Não'}"
+            f"- **{row['name']}** | Categoria: {row['name_cat']} | Preço: R${row['price_brl']:.2f} | Estoque: {row['stock_quantity']} | Promoção: {row['is_active']}"
         )
         
     return "\n".join(linhas)
