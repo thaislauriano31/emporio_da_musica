@@ -52,7 +52,7 @@ streamlit run app.py
 A solução adota o padrão ReAct (Reasoning + Acting) com Tool Calling nativo.
 
 Para evitar alucinações em dados críticos (como preços, estoque ou status de entrega), desacoplei a camada de raciocínio da camada de dados. O modelo atua como um orquestrador que identifica a intenção, executa chamadas determinísticas a ferramentas específicas e sintetiza a resposta final com base nos dados reais.
-
+```text
                   ┌─────────────────────────────────────────┐
                   │             Interface UI                │
                   │              (Streamlit)                │
@@ -77,7 +77,7 @@ Para evitar alucinações em dados críticos (como preços, estoque ou status de
 │   Vector Search   │        │ categories.csv    │          │ orders.csv        │
 │ (multilingual-e5) │        │ promotions.csv    │          │ order_items.csv   │
 └───────────────────┘        └───────────────────┘          └───────────────────┘
----
+```
 Decisões de Engenharia & Raciocínio Técnico
 * **Modelo & Provedor (`Mistral AI` / `open-mistral-7b`):** Apresenta bom suporte nativo a chamada determinística de funções, baixa latência e ótimo custo-benefício para fluxos conversacionais estruturados em português (utilizei apenas o tier gratuito).
 Precision & Tool Calling: Escolhido por apresentar excelente taxa de acerto no cumprimento de schemas JSON e execução de function calling em português, combinando baixa latência e custo reduzido. A temperatura foi configurada em 0.2 para priorizar saídas determinísticas e evitar desvios no cumprimento do prompt.
