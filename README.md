@@ -1,7 +1,7 @@
 # Empório da Música — Agente Virtual de Atendimento
 
 Este repositório contém a implementação do **Tom**, um agente inteligente especialista no atendimento ao cliente da loja **Empório da Música**. Desenvolvido com **Streamlit** e **LangChain**. O assistente é capaz de consultar políticas internas (RAG em PDF), filtrar produtos e promoções (Pandas em CSVs) e acompanhar o status de pedidos.
- **Acesse o App Deployado:** `https://emporio-da-musica.streamlit.app/`
+ **Acesse o App Deployado:** [`https://emporio-da-musica.streamlit.app/`](https://emporio-da-musica.streamlit.app/)
 
 ---
 
